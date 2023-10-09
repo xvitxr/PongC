@@ -7,11 +7,8 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
 
-#ifdef __WIN32__
-#include <Windows.h>
-#endif
-
 #define PONGC_PASSERT_ED(X, condition) printf("%s: %s\n", X, condition ? "enabled" : "disabled")
+#define PONGC_FONT_FILE "/usr/share/fonts/TTF/Hack-Regular.ttf"
 
 /* Globals */
 
@@ -23,7 +20,9 @@ const char* PongC_Help =
 	"--no-vsync          Disables VSync.\n"
 	"--render-collisions Enables the redering of the collision boxes.\n"
 	"--no-player1        Makes player 1 a computer.\n"
-	"--no-player2        Makes player 2 a computer.\n\n"
+	"--no-player2        Makes player 2 a computer.\n"
+  "--mouse-player1     Makes player 1 move with the mouse\n"
+  "--mouse-player2     Makes player 2 move with the mouse\n\n"
 
 	"Controls:\n\n"
 
@@ -98,13 +97,14 @@ float PongC_BallSpeedMultiplier = 3.f;
 
 /* Flags */
 
-bool PongC_RenderText      = true;
-bool PongC_Resizable       = false;
-bool PongC_VSync           = true;
-bool PongC_NoPlayer1	   = false;
-bool PongC_NoPlayer2	   = false;
-
-bool PongC_CollisionRendering = false;
+bool PongC_CollisionRendering	= false;
+bool PongC_RenderText			= true;
+bool PongC_Resizable			= false;
+bool PongC_VSync				= true;
+bool PongC_NoPlayer1			= false;
+bool PongC_NoPlayer2			= false;
+bool PongC_MouseMovementPlayer1 = false;
+bool PongC_MouseMovementPlayer2 = false;
 
 int PongC_GetWindowW()
 {
@@ -134,13 +134,13 @@ SDL_Color PongC_GetColor(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 	return c;
 }
 
-void PongC_RenderFillCircle(int centerX, int centerY, int radius) 
+void PongC_RenderFillCircle(int centerX, int centerY, int radius)
 {
-	for (int y = -radius; y <= radius; y++) 
+	for (int y = -radius; y <= radius; y++)
 	{
-		for (int x = -radius; x <= radius; x++) 
+		for (int x = -radius; x <= radius; x++)
 		{
-			if (x * x + y * y <= radius * radius) 
+			if (x * x + y * y <= radius * radius)
 			{
 				SDL_RenderDrawPoint(PongC_Renderer, centerX + x, centerY + y);
 			}
@@ -183,7 +183,7 @@ PongC_Player_t* PongC_CreatePlayer(int screenSide, PongC_PlayerType type, SDL_FR
 		p->x = 10;
 	else
 		p->x = (PongC_GetWindowW() - p->Width) - 10;
-	
+
 	p->y = (PongC_GetWindowH() / 2) - (p->Height / 2);
 
 	PongC_AssignPlayerCollision(p, collision);
@@ -230,6 +230,8 @@ void PongC_Reset()
 	PongC_Ball->y = PongC_GetWindowH() / 2;
 	PongC_Ball->Radius = 15;
 
+    PongC_GetWindowH();
+
 	PongC_BallCollision.x = PongC_Ball->x - PongC_Ball->Radius / 1.5f;
 	PongC_BallCollision.y = PongC_Ball->y - PongC_Ball->Radius / 1.5f;
 	PongC_BallCollision.w = PongC_Ball->Radius * 1.5f;
@@ -243,13 +245,24 @@ void PongC_Reset()
 
 	PongC_Started = false;
 	PongC_BallSpeedMultiplier = 3.f;
-	
+
 	PongC_GlobalPlayersId = 0;
 }
 
 // For humans.
 void PongC_PlayerUpdateHuman(PongC_Player_t* player)
 {
+	int mouseY;
+	SDL_GetMouseState(NULL, &mouseY);
+	if (PongC_MouseMovementPlayer1) {
+		if (!player->Id)
+			player->y = mouseY - player->Height / 2;
+	}
+	if (PongC_MouseMovementPlayer2) {
+		if (player->Id != 0)
+			player->y = mouseY - player->Height / 2;
+	}
+
 	bool moveUp   = false;
 	bool moveDown = false;
 
@@ -397,7 +410,7 @@ int PongC_HandleEvents()
 	switch (PongC_Events->type)
 	{
 		case SDL_QUIT: PongC_IsRunning = false; return 2;
-			
+
 		case SDL_KEYDOWN:
 			PongC_OnKeyDown(PongC_Events->key.keysym.mod, PongC_Events->key.keysym.scancode, PongC_Events->key.keysym.sym);
 			break;
@@ -423,7 +436,7 @@ void PongC_Update()
 	if (PongC_IsKeyPressed(SDL_SCANCODE_SPACE) && !PongC_Started)
 	{
 		PongC_Started = true;
-		
+
 		PongC_Ball->DirectionX = -1;
 		PongC_Ball->DirectionY = -1;
 	}
@@ -449,8 +462,8 @@ void PongC_RenderUI()
 	static char pointsP1Buffer[100];
 	static char pointsP2Buffer[100];
 
-	sprintf_s(pointsP1Buffer, 100, "Player 1 Score: %d", PongC_Player1Points);
-	sprintf_s(pointsP2Buffer, 100, "Player 2 Score: %d", PongC_Player2Points);
+	sprintf(pointsP1Buffer, "Player 1 Score: %d", PongC_Player1Points);
+	sprintf(pointsP2Buffer, "Player 2 Score: %d", PongC_Player2Points);
 
 	static SDL_FPoint pointsP1Pos;
 	pointsP1Pos.x = 20;
@@ -471,7 +484,7 @@ void PongC_Render()
 
 	PongC_PlayerRender(&PongC_Player1Collision);
 	PongC_PlayerRender(&PongC_Player2Collision);
-	
+
 	/* Text rendering */
 
 	if (PongC_RenderText)
@@ -589,6 +602,10 @@ int PongC_Init(int argc, char* argv[])
 				PongC_NoPlayer1 = true;
 			if (!strcmp(argv[i], "--no-player2"))
 				PongC_NoPlayer2 = true;
+			if (!strcmp(argv[i], "--mouse-player1"))
+				PongC_MouseMovementPlayer1 = true;
+			if (!strcmp(argv[i], "--mouse-player2"))
+				PongC_MouseMovementPlayer2 = true;
 		}
 	}
 
@@ -597,10 +614,12 @@ int PongC_Init(int argc, char* argv[])
 	PONGC_PASSERT_ED("Collision rendering", PongC_CollisionRendering);
 	PONGC_PASSERT_ED("VSync", PongC_VSync);
 	PONGC_PASSERT_ED("Player 1", !PongC_NoPlayer1);
+	printf("\tMovement type: %s\n", PongC_MouseMovementPlayer1 ? "mouse." : "keys.");
 	PONGC_PASSERT_ED("Player 2", !PongC_NoPlayer2);
+	printf("\tMovement type: %s\n", PongC_MouseMovementPlayer2 ? "mouse." : "keys.");
 
 	/* SDL initialization */
-	
+
 	if (SDL_Init(SDL_INIT_EVERYTHING) != 0)
 	{
 		printf("SDL failed to initialize: %s\n", SDL_GetError());
@@ -617,7 +636,7 @@ int PongC_Init(int argc, char* argv[])
 		printf("TTF initialized successfully!\n");
 
 	/* Font */
-	PongC_Font = TTF_OpenFont("fira.ttf", 20);
+	PongC_Font = TTF_OpenFont(PONGC_FONT_FILE, 20);
 	if (!PongC_Font)
 	{
 		printf("Failed to load font... [fira.ttf]: %s", TTF_GetError());
@@ -627,7 +646,7 @@ int PongC_Init(int argc, char* argv[])
 	// Window
 	{
 		uint32_t resizable = PongC_Resizable ? SDL_WINDOW_RESIZABLE : 0;
-		
+
 		PongC_Window = SDL_CreateWindow(
 			"PongC"
 			, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED
@@ -686,7 +705,7 @@ void PongC_Quit()
 	free(PongC_Ball);
 
 	TTF_CloseFont(PongC_Font);
-	
+
 	SDL_Quit();
 	TTF_Quit();
 
