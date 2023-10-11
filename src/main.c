@@ -536,12 +536,14 @@ void PongC_InitWindowIcon()
 	SDL_Surface* icon_sur;
 	SDL_Texture* icon = SDL_CreateTexture(PongC_Renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, 16, 16);
 
-
+  // Redirects the rendering to the icon_sur surface.
 	SDL_SetRenderTarget(PongC_Renderer, icon);
 
+  // Clears the surface before drawing.
 	SDL_SetRenderDrawColor(PongC_Renderer, 0, 0, 0, 0);
 	SDL_RenderClear(PongC_Renderer);
 
+  // Draws the circle.
 	SDL_SetRenderDrawColor(PongC_Renderer, 255, 255, 0, 255);
 	PongC_RenderFillCircle(8, 8, 6);
 
