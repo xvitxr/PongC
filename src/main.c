@@ -18,17 +18,17 @@ const char* PongC_Help =
 	"--no-text           No text rendering.\n"
 	"--resizable         Makes the game window resizable.\n"
 	"--no-vsync          Disables VSync.\n"
-	"--render-collisions Enables the redering of the collision boxes.\n"
+	"--render-collisions Enables the rendering of the collision boxes.\n"
 	"--no-player1        Makes player 1 a computer.\n"
 	"--no-player2        Makes player 2 a computer.\n"
-  "--mouse-player1     Makes player 1 move with the mouse\n"
-  "--mouse-player2     Makes player 2 move with the mouse\n\n"
+  "--mouse-player1     Makes player 1 move with the mouse.\n"
+  "--mouse-player2     Makes player 2 move with the mouse.\n\n"
 
 	"Controls:\n\n"
 
 	"F1   Shows this message\n"
-	"F2   Decreases ball speed multiplier\n"
-	"F3   Increases ball speed multiplier\n"
+	"F2   Decreases ball speed multiplier.\n"
+	"F3   Increases ball speed multiplier.\n"
 	"W    Moves player 1 up. (If enabled)\n"
 	"S    Moves player 1 up. (If enabled)\n"
 	"Up   Moves player 2 up. (If enabled)\n"
@@ -509,7 +509,7 @@ void PongC_Run()
 			PongC_HandleEvents();
 
 		/*
-			Afters handling events, may be the case of
+			After handling events, may be the case of
 			PongC_IsRunning being set to false, but the
 			while-loop will keep running until the end,
 			executing code that uses, now, null pointers.
@@ -564,12 +564,12 @@ void PongC_InitWindowIcon()
 /*
 	Initializes PongC components.
 
-	@returns  2 when --help is passed.
-			  0 on success.
-			 -2 on SDL failure.
-		     -3 on TTF failure.
-			 -4 on Window failure.
-			 -5 on Renderer failure.
+	@returns 2 when --help is passed.
+			     0 on success.
+			    -2 on SDL failure.
+		      -3 on TTF failure.
+			    -4 on Window failure.
+			    -5 on Renderer failure.
 */
 int PongC_Init(int argc, char* argv[])
 {
